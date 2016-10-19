@@ -13,7 +13,7 @@ import rendererFn from './components/customrenderer';
 import customStyleMap from './util/customstylemap';
 import RenderMap from './util/rendermap';
 import keyBindingFn from './util/keybinding';
-import { Block, Entity as E } from './util/constants';
+import { Block, Entity as E, HANDLED, NOT_HANDLED } from './util/constants';
 import beforeInput, { StringToTypeMap } from './util/beforeinput';
 import blockStyleFn from './util/blockStyleFn';
 import { getCurrentBlock, addNewBlock, resetBlockWithType, addNewBlockAt } from './model';
@@ -134,22 +134,6 @@ class MediumDraftEditor extends React.Component {
     this.onChange(RichUtils.toggleLink(editorState, selection, entityKey), this.focus);
   }
 
-  // addMedia() {
-    // const src = window.prompt('Enter a URL');
-    // if (!src) {
-    //   return;
-    // }
-    // const entityKey = Entity.create('image', 'IMMUTABLE', {src});
-    // this.onChange(
-    //   AtomicBlockUtils.insertAtomicBlock(
-    //     this.props.editorState,
-    //     entityKey,
-    //     ' '
-    //   )
-    // );
-  // }
-
-
   /*
   Implemented to just pass it on to the parent component. Will add some
   customizations later or as when needed.
@@ -177,17 +161,17 @@ class MediumDraftEditor extends React.Component {
   handleKeyCommand(command) {
     // console.log(command);
     if (this.props.handleKeyCommand && this.props.handleKeyCommand(command)) {
-      return true;
+      return HANDLED;
     }
     if (command === 'showlinkinput') {
       if (this.toolbar) {
         this.toolbar.handleLinkInput(null, true);
       }
-      return true;
+      return HANDLED;
     } else if (command === 'add-new-block') {
       const { editorState } = this.props;
       this.onChange(addNewBlock(editorState, Block.BLOCKQUOTE));
-      return true;
+      return HANDLED;
     }
     const { editorState } = this.props;
     const block = getCurrentBlock(editorState);
@@ -195,7 +179,7 @@ class MediumDraftEditor extends React.Component {
       let newBlockType = command.split(':')[1];
       const currentBlockType = block.getType();
       if (currentBlockType === Block.ATOMIC || currentBlockType === 'media') {
-        return false;
+        return NOT_HANDLED;
       }
       if (currentBlockType === Block.BLOCKQUOTE && newBlockType === Block.CAPTION) {
         newBlockType = Block.BLOCKQUOTE_CAPTION;
@@ -203,18 +187,18 @@ class MediumDraftEditor extends React.Component {
         newBlockType = Block.BLOCKQUOTE;
       }
       this.onChange(RichUtils.toggleBlockType(editorState, newBlockType));
-      return true;
+      return HANDLED;
     } else if (command.indexOf('toggleinline:') === 0) {
       const inline = command.split(':')[1];
       this._toggleInlineStyle(inline);
-      return true;
+      return HANDLED;
     }
     const newState = RichUtils.handleKeyCommand(editorState, command);
     if (newState) {
       this.onChange(newState);
-      return true;
+      return HANDLED;
     }
-    return false;
+    return NOT_HANDLED;
   }
 
   /*
@@ -235,13 +219,13 @@ class MediumDraftEditor extends React.Component {
   handleReturn(e) {
     if (this.props.handleReturn) {
       if (this.props.handleReturn()) {
-        return true;
+        return HANDLED;
       }
     }
     const { editorState } = this.props;
     if (isSoftNewlineEvent(e)) {
       this.onChange(RichUtils.insertSoftNewline(editorState));
-      return true;
+      return NOT_HANDLED;
     }
     if (!e.altKey && !e.metaKey && !e.ctrlKey) {
       const currentBlock = getCurrentBlock(editorState);
@@ -249,7 +233,7 @@ class MediumDraftEditor extends React.Component {
 
       if (blockType.indexOf('atomic') === 0) {
         this.onChange(addNewBlockAt(editorState, currentBlock.getKey()));
-        return true;
+        return HANDLED;
       }
 
       if (currentBlock.getLength() === 0) {
@@ -264,9 +248,9 @@ class MediumDraftEditor extends React.Component {
           case Block.H3:
           case Block.H1:
             this.onChange(resetBlockWithType(editorState, Block.UNSTYLED));
-            return true;
+            return HANDLED;
           default:
-            return false;
+            return NOT_HANDLED;
         }
       }
 
@@ -275,13 +259,13 @@ class MediumDraftEditor extends React.Component {
       if (selection.isCollapsed() && currentBlock.getLength() === selection.getStartOffset()) {
         if (this.props.continuousBlocks.indexOf(blockType) < 0) {
           this.onChange(addNewBlockAt(editorState, currentBlock.getKey()));
-          return true;
+          return HANDLED;
         }
-        return false;
+        return NOT_HANDLED;
       }
-      return false;
+      return NOT_HANDLED;
     }
-    return false;
+    return NOT_HANDLED;
   }
 
 

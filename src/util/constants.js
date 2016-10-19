@@ -40,4 +40,6 @@ export default {
   Block,
   Inline,
   Entity,
+  HANDLED: 'handled',
+  NOT_HANDLED: 'not-handled',
 };

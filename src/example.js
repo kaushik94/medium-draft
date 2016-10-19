@@ -38,6 +38,8 @@ import {
   rendererFn,
 } from './index';
 
+import { HANDLED, NOT_HANDLED } from './util/constants';
+
 
 const newTypeMap = StringToTypeMap;
 newTypeMap['2.'] = Block.OL;
@@ -62,7 +64,7 @@ const handleBeforeInput = (editorState, str, onChange) => {
     const len = text.length;
     if (selectionState.getAnchorOffset() === 0) {
       onChange(EditorState.push(editorState, Modifier.insertText(contentState, selectionState, (str === '"' ? DQUOTE_START : SQUOTE_START)), 'transpose-characters'));
-      return true;
+      return HANDLED;
     } else if (len > 0) {
       const lastChar = text[len - 1];
       if (lastChar !== ' ') {
@@ -70,7 +72,7 @@ const handleBeforeInput = (editorState, str, onChange) => {
       } else {
         onChange(EditorState.push(editorState, Modifier.insertText(contentState, selectionState, (str === '"' ? DQUOTE_START : SQUOTE_START)), 'transpose-characters'));
       }
-      return true;
+      return HANDLED;
     }
   }
   return beforeInput(editorState, str, onChange, newTypeMap);
@@ -212,7 +214,7 @@ class AtomicEmbedComponent extends React.Component {
 
   render() {
     const { url } = this.props.data;
-    const innerHTML = `<div><a class="embedly-card" href="${url}" data-card-controls="0" data-card-theme="dark">Embedded ― ${url}</a></div>`;
+    const innerHTML = `<div><a class="embedly-card" href="${url}" data-card-controls="0" data-card-theme="dark" target="_blank">Embedded ― ${url}</a></div>`;
     return (
       <div className="md-block-atomic-embed">
         <div dangerouslySetInnerHTML={{ __html: innerHTML }} />
@@ -283,10 +285,11 @@ class App extends React.Component {
     }, {
       title: 'Embed',
       component: EmbedSideButton,
-    }, {
-      title: 'Separator',
-      component: SeparatorSideButton,
     }];
+    // , {
+    //   title: 'Separator',
+    //   component: SeparatorSideButton,
+    // }
 
     this.getEditorState = () => this.state.editorState;
 
